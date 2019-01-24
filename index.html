@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>文章分享图</title>
+		<style type="text/css">
+			.canvas {
+				position: absolute;
+				top: 30px;
+				left: 50%;
+				transform: translate(-50%);
+				-webkit-transform: translate(-50%);
+				background: white;
+			}
+			
+			.shareMaskclass {
+				background: rgba(100, 100, 100, 0.3);
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				z-index: 99;
+				top: 0;
+				left: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="shareMask" class="shareMaskclass" style="display: none;" onclick="cancelMask()">
+			<canvas id="myCanvas" class="canvas" height="550px" <!--style="display: none;"-->>
+				<!--要拼一起的图片放这里-->
+				<img id="top" src="img/top.jpg"/>
+			 	<img id="bottom" src="img/bottom.jpg"/>
+			</canvas>
+			
+		 	<!--生成的效果图放这里-->
+		 	<img src="" class="canvas" id="result" height="550px"/>
+		</div>
+
+		<button onclick="startCanvas()">生成分享图</button>
+		<script type="text/javascript">
+
+			//生成分享图和弹窗
+			var screen_width = window.screen.availWidth
+			var canvas_height = document.querySelector('canvas').height
+			var canvas_width = (canvas_height * 9 / 16).toFixed(0)
+			var now_height = 0	//画图指针当前行高，从0开始
+			var blank_distant = 20	//左右内边距
+			
+			//依据画布大小resize图片
+			resizeImg = function(img) {
+				return [canvas_width, (img.height * canvas_width / img.width).toFixed(0)]
+			}
+			//满屏画图
+			appendImg = function(canvas_context, img) {
+				var r = resizeImg(img)
+				canvas_context.drawImage(img, 0, now_height, r[0], r[1]);
+				now_height += parseInt(r[1]) + blank_distant * 2
+			}
+			//画入文字
+			appendText = function(canvas_context, content, font, color, line_height) {
+				canvas_context.font = font
+				canvas_context.fillStyle = color
+				var font_size = parseInt(font.match(/\d+(?=px)/)) || 12
+				var writeable_width = canvas_width - blank_distant * 2
+				var line_words_number = Math.ceil(writeable_width / font_size)
+				var start = 0, end = line_words_number
+				for (var i=0, loop=Math.ceil(content.length/line_words_number); i<=loop; i++) {
+					if (i==loop) {
+						end = content.length
+					}
+					canvas_context.fillText(content.substring(start, end), blank_distant, now_height, writeable_width, line_height)
+					now_height += line_height
+					start = end
+					end += line_words_number
+				}
+				//now_height += blank_distant
+			}
+			
+			startCanvas = function() {
+				var obj = document.getElementById("shareMask");
+				obj.style.cssText = "display:block;"
+				var canvas = document.getElementById('myCanvas')
+				var ctx = canvas.getContext('2d')
+				appendImg(ctx, document.getElementById("top"))
+				var content = "据火币全球站官方公告，火币将为平台上持有TRX的用户空投BitTorrent（BTT）“糖果”，空投预计将在2019年2月11日发生，并在波场6,600,000区块高度进行快照。火币全球站的TRX持有者均会根据快照获得BTT空投，HB10持有者会根据TRX成分获得空投，杠杆用户根据扣除借出后的实际TRX数量获得空投，火币钱包持有TRX的用户可自动获得BTT空投。 "
+				var jmz = {};
+				jmz.GetLength = function(str) {
+					return str.replace(/[\u0391-\uFFE5]/g, "aa").length; //先把中文替换成两个字节的英文，在计算长度
+				};
+				var contentLen = Math.ceil(jmz.GetLength(content) / 2); //向上求整计算字数
+
+				if(contentLen < 101) {
+					var titleFont = 'bolder Arial 15px';
+					var contentFont = '14px Arial';
+					var dateFont = '12px Arial';
+					var titleH = 25;
+					var contentH = 30;
+					var dateH = 15;
+				} else if(100 < contentLen&&contentLen<151) {
+					var titleFont = 'bolder 13px Arial';
+					var contentFont = '12px Arial';
+					var dateFont = '11px Arial';
+					var titleH = 20;
+					var contentH = 25;
+					var dateH = 12;
+				} else if(150 < contentLen&&contentLen < 201) {
+					var titleFont = 'bolder 12px Arial';
+					var contentFont = '11px Arial';
+					var dateFont = '10px Arial';
+					var titleH = 15;
+					var contentH = 20;
+					var dateH = 11;
+				} else if(200 < contentLen&&contentLen < 300) {
+					var titleFont = 'bolder 11px Arial';
+					var contentFont = '9px Arial';
+					var dateFont = '10px Arial';
+					var titleH = 15;
+					var contentH = 20;
+					var dateH = 11;
+				}
+				/*ctx.font = titleFont;
+				ctx.wrapText('区块链技术为传统金融插上创新翅膀', 15, 200, 280, titleH);*/
+				appendText(ctx, '区块链技术为传统金融插上创新翅膀区块链技术为传统金融插上创新翅膀', titleFont, '#FFFFFF', titleH)
+				/*ctx.fillStyle = '#585858';
+				ctx.font = dateFont;
+				ctx.fillText('2018-09-14  15:32', 15, window.textHeight - 5, 300, dateH);*/
+				appendText(ctx, '2018-09-14  15:32', dateFont, '#585858', dateH)
+				/*ctx.fillStyle = '#444444';
+				ctx.font = contentFont;
+				ctx.wrapText(content, 15, window.textHeight + 30, 275, contentH);*/
+				appendText(ctx, content, contentFont, '#444444', contentH)
+				/*var bottom = document.getElementById("bottom");
+				bottom.onload = function() {
+					ctx.drawImage(bottom, 0, 425, canvas.width, 125);
+				}
+				bottom.onload();*/
+				appendImg(ctx, document.getElementById("bottom"))
+				now_height = 0
+				document.querySelector('#result').src = canvas.toDataURL("image/jpeg")
+			}
+			
+			//取消透明层
+			cancelMask = function() {
+				var obj = document.getElementById("shareMask");
+				obj.style.cssText = "display:none;"
+			}
+		</script>
+	</body>
+
+</html>
